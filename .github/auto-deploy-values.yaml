@@ -1,0 +1,69 @@
+# Copy to .github/auto-deploy-values.yaml in the CoreNLP repository.
+# The auto-deploy workflow substitutes the $variables below.
+replicaCount: 1
+strategyType: RollingUpdate
+
+image:
+  repository: "$repository"
+  tag: "$tag"
+  pullPolicy: Always
+  secrets: []
+
+extraLabels:
+  ID: "$service_id"
+
+gitlab:
+  app: "$app_name"
+  envURL: "$repo_url"
+
+service:
+  enabled: true
+  name: web
+  url: "$public_url"
+  type: ClusterIP
+  externalPort: 9000
+  internalPort: 9000
+
+ingress:
+  enabled: true
+  path: "/"
+  className: traefik
+  annotations:
+    cert-manager.io/cluster-issuer: acdh-prod
+
+# Allow approximately ten minutes for startup before restarting the container.
+startupProbe:
+  enabled: true
+  probeType: httpGet
+  path: /ready
+  port: 9000
+  scheme: HTTP
+  initialDelaySeconds: 0
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 60
+  successThreshold: 1
+
+livenessProbe:
+  enabled: true
+  probeType: httpGet
+  path: /live
+  port: 9000
+  scheme: HTTP
+  initialDelaySeconds: 0
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 3
+  successThreshold: 1
+
+readinessProbe:
+  enabled: true
+  probeType: httpGet
+  path: /ready
+  port: 9000
+  scheme: HTTP
+  initialDelaySeconds: 0
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 3
+  successThreshold: 1
